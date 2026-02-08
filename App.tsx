@@ -167,9 +167,11 @@ const App: React.FC = () => {
         height: 500,
         scrollX: 0,
         scrollY: 0,
+        imageTimeout: 0,
         onclone: (clonedDoc: Document) => {
           const el = clonedDoc.getElementById('report-preview');
           if (el) {
+              // Ensure container is strictly defined in the clone
               el.style.transform = 'none';
               el.style.webkitTransform = 'none';
               el.style.margin = '0';
@@ -189,20 +191,39 @@ const App: React.FC = () => {
                 const scaleVal = img.getAttribute('data-scale') || '1';
                 const isSpecial = img.getAttribute('data-special') === 'true';
                 
-                img.style.objectFit = 'contain';
-                img.style.width = '100%';
-                img.style.height = '100%';
+                // For Netlify/Production stability, we avoid object-fit in the clone 
+                // and use explicit centering and scaling.
+                img.style.objectFit = 'none'; 
+                img.style.width = 'auto';
+                img.style.height = 'auto';
+                img.style.maxWidth = '100%';
+                img.style.maxHeight = '100%';
                 img.style.display = 'block';
-                img.style.position = 'relative';
-                img.style.transform = `scale(${scaleVal})`;
-                img.style.transformOrigin = isSpecial ? 'bottom center' : 'center center';
+                img.style.position = 'absolute';
+                
+                if (isSpecial) {
+                   img.style.bottom = '0';
+                   img.style.left = '50%';
+                   img.style.transform = `translateX(-50%) scale(${scaleVal})`;
+                   img.style.transformOrigin = 'bottom center';
+                } else {
+                   img.style.top = '50%';
+                   img.style.left = '50%';
+                   img.style.transform = `translate(-50%, -50%) scale(${scaleVal})`;
+                   img.style.transformOrigin = 'center center';
+                }
                 
                 if (img.parentElement) {
                   img.parentElement.style.overflow = 'hidden';
                   img.parentElement.style.position = 'relative';
-                  img.parentElement.style.display = 'flex';
-                  img.parentElement.style.alignItems = 'center';
-                  img.parentElement.style.justifyContent = 'center';
+                  img.parentElement.style.display = 'block';
+                  // Force block sizing for reliable capture
+                  if (!img.parentElement.style.height) {
+                    img.parentElement.style.height = '100%';
+                  }
+                  if (!img.parentElement.style.width) {
+                    img.parentElement.style.width = '100%';
+                  }
                 }
               }
           }
@@ -317,22 +338,24 @@ const App: React.FC = () => {
     );
   };
 
-  // Helper component for the preview images with reliably captured scaling
+  // Helper component for the preview images that ensures consistency with html2canvas
   const ScalablePreviewImage = ({ src, scale, isSpecial = false }: { src: string | null, scale: number, isSpecial?: boolean }) => {
     if (!src) return <div className="text-slate-100 font-black text-3xl italic opacity-20">FactDot IMAGE</div>;
     return (
-      <div className="w-full h-full flex items-center justify-center overflow-hidden relative">
+      <div className="w-full h-full relative overflow-hidden flex items-center justify-center">
         <img 
           crossOrigin="anonymous" 
           src={src} 
           data-scale={scale} 
           data-special={isSpecial}
           style={{ 
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain',
-            transform: `scale(${scale})`,
-            transformOrigin: isSpecial ? 'bottom center' : 'center center',
+            maxWidth: '100%',
+            maxHeight: '100%',
+            width: 'auto',
+            height: 'auto',
+            position: 'absolute',
+            ...(isSpecial ? { bottom: 0, transformOrigin: 'bottom center' } : { top: '50%', left: '50%', transformOrigin: 'center center' }),
+            transform: isSpecial ? `translateX(-50%) scale(${scale})` : `translate(-50%, -50%) scale(${scale})`,
           }} 
           alt="Preview"
         />
@@ -899,9 +922,10 @@ const App: React.FC = () => {
                                              position: 'absolute',
                                              bottom: 0,
                                              right: 0,
-                                             width: '100%',
-                                             height: '100%',
-                                             objectFit: 'contain',
+                                             maxWidth: '100%',
+                                             maxHeight: '100%',
+                                             width: 'auto',
+                                             height: 'auto',
                                              transform: `scale(${reportData.image1Scale})`,
                                              transformOrigin: 'bottom right'
                                           }} 
@@ -988,9 +1012,10 @@ const App: React.FC = () => {
                                          position: 'absolute',
                                          bottom: 0,
                                          left: '50%',
-                                         width: '100%',
-                                         height: '100%',
-                                         objectFit: 'contain',
+                                         maxWidth: '100%',
+                                         maxHeight: '100%',
+                                         width: 'auto',
+                                         height: 'auto',
                                          transform: `translateX(-50%) scale(${reportData.image1Scale})`,
                                          transformOrigin: 'bottom center'
                                       }}
