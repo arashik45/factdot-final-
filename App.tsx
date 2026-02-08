@@ -714,34 +714,39 @@ const App: React.FC = () => {
                               </div>
                            </div>
                         ) : isResult2 ? (
-                           <div className="flex-1 flex flex-col items-center pt-4 h-full relative">
-                              <div className="w-[85%] bg-white rounded-2xl border border-slate-100 shadow-sm p-4 text-center mb-6">
-                                 <h2 className="text-[28px] font-black text-slate-900 leading-tight">{reportData.title || "আসন নাম"}</h2>
+                           <div className="flex-1 flex flex-col items-center pt-4 h-full px-4 pb-2">
+                              {/* Constituency Name */}
+                              <div className="w-full bg-white rounded-2xl border border-slate-100 shadow-sm p-3 text-center mb-4 shrink-0">
+                                 <h2 className="text-[24px] font-black text-slate-900 leading-tight">{reportData.title || "আসন নাম"}</h2>
                               </div>
-                              <div className="flex-1 w-full grid grid-cols-2 divide-x divide-slate-100 mb-16">
-                                 <div className="flex flex-col items-center p-4 space-y-4">
-                                    <span className="text-[20px] font-black text-slate-800 text-center h-10 flex items-center">{reportData.party1MarkerName || "মার্কার নাম"}</span>
-                                    <div className="w-24 h-24 rounded-2xl bg-white border p-1 shadow-sm overflow-hidden flex items-center justify-center">
-                                       {reportData.image1 ? <img src={reportData.image1} className="w-full h-full object-contain" /> : <div className="text-slate-100 italic">IMG</div>}
+                              
+                              {/* Results Grid - flex-grow ensures it takes up available space */}
+                              <div className="flex-1 w-full grid grid-cols-2 divide-x divide-slate-100 mb-2">
+                                 <div className="flex flex-col items-center p-2 space-y-3">
+                                    <span className="text-[18px] font-black text-slate-800 text-center h-10 flex items-center leading-tight line-clamp-2">{reportData.party1MarkerName || "মার্কার নাম"}</span>
+                                    <div className="w-20 h-20 rounded-2xl bg-white border p-1 shadow-sm overflow-hidden flex items-center justify-center shrink-0">
+                                       {reportData.image1 ? <img src={reportData.image1} className="w-full h-full object-contain" /> : <div className="text-slate-100 italic text-[10px]">IMG</div>}
                                     </div>
-                                    <div className="flex flex-col items-center">
-                                       <span className="text-[48px] font-black text-[#1e3a8a] leading-none">{reportData.party1Seats || toBn(0)}</span>
+                                    <div className="flex flex-col items-center leading-none">
+                                       <span className="text-[42px] font-black text-[#1e3a8a] leading-none">{reportData.party1Seats || toBn(0)}</span>
                                        <span className="text-[10px] font-bold text-slate-400 uppercase mt-1">প্রাপ্ত ভোট</span>
                                     </div>
                                  </div>
-                                 <div className="flex flex-col items-center p-4 space-y-4">
-                                    <span className="text-[20px] font-black text-slate-800 text-center h-10 flex items-center">{reportData.party2MarkerName || "মার্কার নাম"}</span>
-                                    <div className="w-24 h-24 rounded-2xl bg-white border p-1 shadow-sm overflow-hidden flex items-center justify-center">
-                                       {reportData.image2 ? <img src={reportData.image2} className="w-full h-full object-contain" /> : <div className="text-slate-100 italic">IMG</div>}
+                                 <div className="flex flex-col items-center p-2 space-y-3">
+                                    <span className="text-[18px] font-black text-slate-800 text-center h-10 flex items-center leading-tight line-clamp-2">{reportData.party2MarkerName || "মার্কার নাম"}</span>
+                                    <div className="w-20 h-20 rounded-2xl bg-white border p-1 shadow-sm overflow-hidden flex items-center justify-center shrink-0">
+                                       {reportData.image2 ? <img src={reportData.image2} className="w-full h-full object-contain" /> : <div className="text-slate-100 italic text-[10px]">IMG</div>}
                                     </div>
-                                    <div className="flex flex-col items-center">
-                                       <span className="text-[48px] font-black text-[#dc2626] leading-none">{reportData.party2Seats || toBn(0)}</span>
+                                    <div className="flex flex-col items-center leading-none">
+                                       <span className="text-[42px] font-black text-[#dc2626] leading-none">{reportData.party2Seats || toBn(0)}</span>
                                        <span className="text-[10px] font-bold text-slate-400 uppercase mt-1">প্রাপ্ত ভোট</span>
                                     </div>
                                  </div>
                               </div>
-                              <div className="absolute bottom-4 left-0 w-full px-6 py-4 text-center">
-                                 <h3 className="text-[24px] font-black text-slate-900 leading-tight">
+                              
+                              {/* Summary Section - Bottom anchored but flex item */}
+                              <div className="w-full px-4 py-3 text-center border-t border-slate-50 mt-auto shrink-0">
+                                 <h3 className="text-[20px] font-black text-slate-900 leading-tight">
                                     {reportData.winnerMarkerName || reportData.party1MarkerName || "বিজয়ী দল"} এগিয়ে আছে {voteDiff} ভোটে
                                  </h3>
                               </div>
@@ -756,7 +761,7 @@ const App: React.FC = () => {
                                       {reportData.image2 ? <img src={reportData.image2} className="w-full h-full object-contain" /> : <div className="text-slate-100 font-black text-3xl italic">IMG 2</div>}
                                   </div>
                               </div>
-                              <div className="flex-1 flex-col justify-center items-center px-4">
+                              <div className="flex-1 flex flex-col justify-center items-center px-4">
                                   <h2 className="text-[30px] font-black text-[#b91c1c] leading-[1.3] text-center py-2">
                                      {reportData.title || 'শিরোনাম এখানে দেখা যাবে'}
                                   </h2>
