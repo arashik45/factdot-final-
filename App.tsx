@@ -153,14 +153,22 @@ const App: React.FC = () => {
       const canvas = await window.html2canvas(preview, {
         scale: 4, 
         useCORS: true,
+        allowTaint: false,
         backgroundColor: '#FFFFFF',
         logging: false,
         scrollY: -window.scrollY,
         onclone: (clonedDoc: Document) => {
           const el = clonedDoc.getElementById('report-preview');
           if (el) {
-              el.style.overflow = 'visible';
+              // Ensure the element is perfectly positioned and sized for capture
               el.style.transform = 'none';
+              el.style.webkitTransform = 'none';
+              el.style.overflow = 'visible';
+              el.style.margin = '0';
+              el.style.padding = '0';
+              el.style.width = '400px';
+              el.style.height = '500px';
+              el.style.position = 'static';
           }
         }
       });
@@ -430,7 +438,7 @@ const App: React.FC = () => {
                               <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-blue-200 rounded-xl cursor-pointer bg-white hover:border-blue-400 overflow-hidden relative group">
                                  {reportData.image1 ? (
                                    <>
-                                     <img src={reportData.image1} className="w-full h-full object-contain" />
+                                     <img crossOrigin="anonymous" src={reportData.image1} className="w-full h-full object-contain" />
                                      <button type="button" onClick={() => removeImage('image1')} className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
                                        <Trash2 size={12} />
                                      </button>
@@ -461,7 +469,7 @@ const App: React.FC = () => {
                               <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-red-200 rounded-xl cursor-pointer bg-white hover:border-blue-400 overflow-hidden relative group">
                                  {reportData.image2 ? (
                                    <>
-                                     <img src={reportData.image2} className="w-full h-full object-contain" />
+                                     <img crossOrigin="anonymous" src={reportData.image2} className="w-full h-full object-contain" />
                                      <button type="button" onClick={() => removeImage('image2')} className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
                                        <Trash2 size={12} />
                                      </button>
@@ -595,7 +603,7 @@ const App: React.FC = () => {
                             <label className="h-40 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center cursor-pointer bg-slate-50 hover:bg-white overflow-hidden relative group">
                               {reportData.image1 ? (
                                 <>
-                                  <img src={reportData.image1} className="h-full w-full object-contain" />
+                                  <img crossOrigin="anonymous" src={reportData.image1} className="h-full w-full object-contain" />
                                   <button type="button" onClick={() => removeImage('image1')} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full">
                                     <Trash2 size={14} />
                                   </button>
@@ -612,7 +620,7 @@ const App: React.FC = () => {
                               <label className="h-40 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center cursor-pointer bg-slate-50 hover:bg-white overflow-hidden relative group">
                                 {reportData.image2 ? (
                                   <>
-                                    <img src={reportData.image2} className="h-full w-full object-contain" />
+                                    <img crossOrigin="anonymous" src={reportData.image2} className="h-full w-full object-contain" />
                                     <button type="button" onClick={() => removeImage('image2')} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full">
                                       <Trash2 size={14} />
                                     </button>
@@ -636,11 +644,12 @@ const App: React.FC = () => {
                <div className="relative group perspective-1000">
                   <div 
                     id="report-preview" 
+                    key={resetCounter}
                     className={`w-[400px] h-[500px] bg-white shadow-2xl overflow-hidden flex flex-col origin-top transform scale-90 sm:scale-100 ${isType1News || isType1News2 ? '' : 'border border-slate-100 rounded-sm'}`}
                   >
                     {/* TOP STATUS BAR / LABEL */}
                     {isFactCheck ? (
-                        <div className="w-full h-16 flex z-20">
+                        <div className="w-full h-16 flex z-30">
                            <div className="flex-1 bg-[#b91c1c] flex items-center justify-center py-2">
                               <h4 className="text-white text-3xl font-black">গুজব</h4>
                            </div>
@@ -649,57 +658,57 @@ const App: React.FC = () => {
                            </div>
                         </div>
                     ) : isNewsCardType4 ? (
-                        <div className="w-full h-16 bg-[#b91c1c] flex items-center justify-center relative z-20">
+                        <div className="w-full h-16 bg-[#b91c1c] flex items-center justify-center relative z-30">
                            <h4 className="text-white text-[28px] font-black">{selectedSubCat.label}</h4>
                         </div>
                     ) : isResultType ? (
-                        <div className="w-full h-16 bg-[#1e3a8a] flex items-center justify-center relative z-20">
+                        <div className="w-full h-16 bg-[#1e3a8a] flex items-center justify-center relative z-30">
                            <h4 className="text-white text-[28px] font-black tracking-tight">নির্বাচনী ফলাফল ২০২৬</h4>
                         </div>
                     ) : (selectedType !== 'type3' && !isType1News && !isType1News2) && (
-                        <div style={{ backgroundColor: selectedSubCat.color }} className="w-full min-h-[56px] flex items-center justify-center relative z-20 px-4 py-3">
+                        <div style={{ backgroundColor: selectedSubCat.color }} className="w-full min-h-[56px] flex items-center justify-center relative z-30 px-4 py-3">
                            <h4 className="text-white text-[28px] font-black uppercase tracking-widest leading-[1.4] text-center">
                               {selectedSubCat.label}
                            </h4>
                         </div>
                     )}
 
-                    <div className="flex-1 flex flex-col overflow-hidden relative">
+                    <div className="flex-1 flex flex-col overflow-hidden relative bg-white z-0">
                         {/* DATE STAMP */}
                         {(isType2 || isNewsCardType4 || isResultType) && (
-                            <div className="absolute top-2 right-4 z-30">
+                            <div className="absolute top-2 right-4 z-40">
                               <span className="text-[11px] font-bold text-slate-400">{reportData.date || 'তারিখ নেই'}</span>
                            </div>
                         )}
                         {isFactCheck && (
-                            <div className="w-full flex justify-end px-6 py-2 h-8">
+                            <div className="w-full flex justify-end px-6 py-2 h-8 z-40">
                               <span className="text-[12px] font-bold text-slate-400">{reportData.date || 'তারিখ নেই'}</span>
                            </div>
                         )}
                         {(selectedType === 'type3' || (!isType1News && !isType1News2 && !isFactCheck && !isType2 && !isNewsCardType4 && !isResultType)) && (
-                           <div className="absolute top-2 right-4 z-30">
+                           <div className="absolute top-2 right-4 z-40">
                               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{reportData.date || 'তারিখ নেই'}</span>
                            </div>
                         )}
 
                         {/* LAYOUTS */}
                         {isNewsCardType4 ? (
-                           <div className="flex-1 flex items-center justify-center px-6">
-                              <div className="w-full bg-white rounded-[1.5rem] border-2 border-[#1e293b] p-8 text-center">
+                           <div className="flex-1 flex items-center justify-center px-6 z-10">
+                              <div className="w-full bg-white rounded-[1.5rem] border-2 border-[#1e293b] p-8 text-center relative">
                                  <h2 className="text-[30px] font-black text-[#1e293b] leading-[1.3] tracking-tight">
                                     {reportData.title || 'শিরোনাম এখানে দেখা যাবে'}
                                  </h2>
                               </div>
                            </div>
                         ) : isResult1 ? (
-                           <div className="flex-1 flex flex-col items-center pt-4 h-full">
-                              <div className="w-[85%] bg-white rounded-2xl border border-slate-100 shadow-sm p-4 text-center mb-6">
+                           <div className="flex-1 flex flex-col items-center pt-4 h-full z-10">
+                              <div className="w-[85%] bg-white rounded-2xl border border-slate-100 shadow-sm p-4 text-center mb-6 relative z-20">
                                  <h2 className="text-[28px] font-black text-slate-900 leading-tight">{reportData.title || "দেশ/সংস্থা"}</h2>
                               </div>
                               <div className="flex-1 w-full grid grid-cols-2 px-4 gap-8">
                                  <div className="flex flex-col items-center space-y-4">
-                                    <div className="w-24 h-24 rounded-full border-2 border-slate-50 shadow-md flex items-center justify-center overflow-hidden bg-white">
-                                       {reportData.image1 ? <img src={reportData.image1} className="w-full h-full object-contain" /> : <div className="text-slate-100 italic">M1</div>}
+                                    <div className="w-24 h-24 rounded-full border-2 border-slate-50 shadow-md flex items-center justify-center overflow-hidden bg-white shrink-0">
+                                       {reportData.image1 ? <img crossOrigin="anonymous" src={reportData.image1} className="w-full h-full object-contain" /> : <div className="text-slate-100 italic">M1</div>}
                                     </div>
                                     <span className="text-[18px] font-black text-slate-800">{reportData.party1MarkerName || "মার্কার নাম"}</span>
                                     <div className="flex flex-col items-center pt-2">
@@ -708,8 +717,8 @@ const App: React.FC = () => {
                                     </div>
                                  </div>
                                  <div className="flex flex-col items-center space-y-4">
-                                    <div className="w-24 h-24 rounded-full border-2 border-slate-50 shadow-md flex items-center justify-center overflow-hidden bg-white">
-                                       {reportData.image2 ? <img src={reportData.image2} className="w-full h-full object-contain" /> : <div className="text-slate-100 italic">M2</div>}
+                                    <div className="w-24 h-24 rounded-full border-2 border-slate-50 shadow-md flex items-center justify-center overflow-hidden bg-white shrink-0">
+                                       {reportData.image2 ? <img crossOrigin="anonymous" src={reportData.image2} className="w-full h-full object-contain" /> : <div className="text-slate-100 italic">M2</div>}
                                     </div>
                                     <span className="text-[18px] font-black text-slate-800">{reportData.party2MarkerName || "মার্কার নাম"}</span>
                                     <div className="flex flex-col items-center pt-2">
@@ -720,18 +729,15 @@ const App: React.FC = () => {
                               </div>
                            </div>
                         ) : isResult2 ? (
-                           <div className="flex-1 flex flex-col items-center pt-4 h-full px-4 pb-2">
-                              {/* Constituency Name */}
-                              <div className="w-full bg-white rounded-2xl border border-slate-100 shadow-sm p-3 text-center mb-4 shrink-0">
+                           <div className="flex-1 flex flex-col items-center pt-4 h-full px-4 pb-2 z-10">
+                              <div className="w-full bg-white rounded-2xl border border-slate-100 shadow-sm p-3 text-center mb-4 shrink-0 relative z-20">
                                  <h2 className="text-[24px] font-black text-slate-900 leading-tight">{reportData.title || "আসন নাম"}</h2>
                               </div>
-                              
-                              {/* Results Grid - flex-grow ensures it takes up available space */}
                               <div className="flex-1 w-full grid grid-cols-2 divide-x divide-slate-100 mb-2">
                                  <div className="flex flex-col items-center p-2 space-y-3">
                                     <span className="text-[18px] font-black text-slate-800 text-center h-10 flex items-center leading-tight line-clamp-2">{reportData.party1MarkerName || "মার্কার নাম"}</span>
                                     <div className="w-20 h-20 rounded-2xl bg-white border p-1 shadow-sm overflow-hidden flex items-center justify-center shrink-0">
-                                       {reportData.image1 ? <img src={reportData.image1} className="w-full h-full object-contain" /> : <div className="text-slate-100 italic text-[10px]">IMG</div>}
+                                       {reportData.image1 ? <img crossOrigin="anonymous" src={reportData.image1} className="w-full h-full object-contain" /> : <div className="text-slate-100 italic text-[10px]">IMG</div>}
                                     </div>
                                     <div className="flex flex-col items-center leading-none">
                                        <span className="text-[42px] font-black text-[#1e3a8a] leading-none">{reportData.party1Seats || toBn(0)}</span>
@@ -741,7 +747,7 @@ const App: React.FC = () => {
                                  <div className="flex flex-col items-center p-2 space-y-3">
                                     <span className="text-[18px] font-black text-slate-800 text-center h-10 flex items-center leading-tight line-clamp-2">{reportData.party2MarkerName || "মার্কার নাম"}</span>
                                     <div className="w-20 h-20 rounded-2xl bg-white border p-1 shadow-sm overflow-hidden flex items-center justify-center shrink-0">
-                                       {reportData.image2 ? <img src={reportData.image2} className="w-full h-full object-contain" /> : <div className="text-slate-100 italic text-[10px]">IMG</div>}
+                                       {reportData.image2 ? <img crossOrigin="anonymous" src={reportData.image2} className="w-full h-full object-contain" /> : <div className="text-slate-100 italic text-[10px]">IMG</div>}
                                     </div>
                                     <div className="flex flex-col items-center leading-none">
                                        <span className="text-[42px] font-black text-[#dc2626] leading-none">{reportData.party2Seats || toBn(0)}</span>
@@ -749,33 +755,31 @@ const App: React.FC = () => {
                                     </div>
                                  </div>
                               </div>
-                              
-                              {/* Summary Section - Bottom anchored but flex item */}
-                              <div className="w-full px-4 py-3 text-center border-t border-slate-50 mt-auto shrink-0">
+                              <div className="w-full px-4 py-3 text-center border-t border-slate-50 mt-auto shrink-0 relative z-20 bg-white/90">
                                  <h3 className="text-[20px] font-black text-slate-900 leading-tight">
                                     {reportData.winnerMarkerName || reportData.party1MarkerName || "বিজয়ী দল"} এগিয়ে আছে {voteDiff} ভোটে
                                  </h3>
                               </div>
                            </div>
                         ) : isFactCheck ? (
-                           <div className="flex-1 flex flex-col p-4 space-y-6">
+                           <div className="flex-1 flex flex-col p-4 space-y-6 z-10">
                               <div className="grid grid-cols-2 gap-4 h-[55%] items-center">
                                   <div className="bg-white aspect-square rounded-sm shadow-md border border-slate-100 flex items-center justify-center overflow-hidden">
-                                      {reportData.image1 ? <img src={reportData.image1} className="w-full h-full object-contain" /> : <div className="text-slate-100 font-black text-3xl italic">IMG 1</div>}
+                                      {reportData.image1 ? <img crossOrigin="anonymous" src={reportData.image1} className="w-full h-full object-contain" /> : <div className="text-slate-100 font-black text-3xl italic">IMG 1</div>}
                                   </div>
                                   <div className="bg-white aspect-square rounded-sm shadow-md border border-slate-100 flex items-center justify-center overflow-hidden">
-                                      {reportData.image2 ? <img src={reportData.image2} className="w-full h-full object-contain" /> : <div className="text-slate-100 font-black text-3xl italic">IMG 2</div>}
+                                      {reportData.image2 ? <img crossOrigin="anonymous" src={reportData.image2} className="w-full h-full object-contain" /> : <div className="text-slate-100 font-black text-3xl italic">IMG 2</div>}
                                   </div>
                               </div>
-                              <div className="flex-1 flex flex-col justify-center items-center px-4">
+                              <div className="flex-1 flex flex-col justify-center items-center px-4 relative z-20">
                                   <h2 className="text-[30px] font-black text-[#b91c1c] leading-[1.3] text-center py-2">
                                      {reportData.title || 'শিরোনাম এখানে দেখা যাবে'}
                                   </h2>
                               </div>
                            </div>
                         ) : isType1News ? (
-                           <div className="flex-1 flex flex-col p-6 h-full relative">
-                              <div className="flex justify-between items-center mb-6">
+                           <div className="flex-1 flex flex-col p-6 h-full relative z-10">
+                              <div className="flex justify-between items-center mb-6 relative z-30">
                                  <div className="flex items-center gap-2">
                                     <div className="text-[#057a44]">
                                        <FactDotLogo size={32} />
@@ -787,23 +791,23 @@ const App: React.FC = () => {
                                     <span className="block text-[10px] font-black pt-0.5">{reportData.date || 'তারিখ'}</span>
                                  </div>
                               </div>
-                              <div className="z-10 space-y-3 mb-4">
+                              <div className="z-30 space-y-3 mb-4">
                                  <h2 className="text-[24px] font-black text-slate-800 leading-[1.3]">"{reportData.title || 'শিরোনাম'}"</h2>
                                  <p className="text-[16px] font-bold text-slate-600 leading-[1.4]">{reportData.description || 'বিস্তারিত বিবরণ...'}</p>
                               </div>
-                              <div className="flex-1 min-h-0 relative z-0 mt-auto flex">
-                                 <div className="mt-auto pb-4 w-[60%] z-20">
+                              <div className="flex-1 min-h-0 relative z-10 mt-auto flex">
+                                 <div className="mt-auto pb-4 w-[60%] z-40">
                                     <span className="text-lg font-black text-slate-800 block leading-tight">- {reportData.person1Name || 'নাম'}</span>
                                     <span className="text-[11px] font-bold text-slate-500 block leading-[1.3]">{reportData.person1Title || 'পদবি'}</span>
                                  </div>
-                                 <div className="absolute bottom-0 right-0 h-full w-[65%] flex items-end justify-end">
-                                    {reportData.image1 && <img src={reportData.image1} className="max-h-full max-w-full object-contain object-bottom" />}
+                                 <div className="absolute bottom-0 right-0 h-full w-[65%] flex items-end justify-end z-20">
+                                    {reportData.image1 && <img crossOrigin="anonymous" src={reportData.image1} className="max-h-full max-w-full object-contain object-bottom" />}
                                  </div>
                               </div>
                            </div>
                         ) : isType1News2 ? (
-                           <div className="flex-1 flex flex-col h-full bg-white relative">
-                              <div className="flex justify-between p-6 pb-2 items-start">
+                           <div className="flex-1 flex flex-col h-full bg-white relative z-10">
+                              <div className="flex justify-between p-6 pb-2 items-start relative z-30">
                                  <div className="flex items-center gap-2">
                                     <div className="text-[#057a44]">
                                        <FactDotLogo size={32} />
@@ -819,7 +823,7 @@ const App: React.FC = () => {
                                  </div>
                               </div>
 
-                              <div className="px-6 py-8 text-center flex flex-col justify-center gap-2">
+                              <div className="px-6 py-8 text-center flex flex-col justify-center gap-2 relative z-30">
                                  <h2 className="text-[32px] font-black text-slate-800 leading-[1.2] tracking-tight">
                                     "{reportData.title || 'প্রথম শিরোনাম'}"
                                  </h2>
@@ -830,16 +834,16 @@ const App: React.FC = () => {
                                  )}
                               </div>
 
-                              <div className="flex-1 w-full px-6 pb-8 mt-auto">
-                                 <div className="bg-slate-50 border border-slate-100 rounded-sm overflow-hidden flex items-center justify-center h-full">
-                                    {reportData.image1 ? <img src={reportData.image1} className="w-full h-full object-contain" /> : <div className="text-slate-100 text-4xl font-black italic opacity-20">FactDot IMAGE</div>}
+                              <div className="flex-1 w-full px-6 pb-8 mt-auto z-10">
+                                 <div className="bg-slate-50 border border-slate-100 rounded-sm overflow-hidden flex items-center justify-center h-full max-h-48">
+                                    {reportData.image1 ? <img crossOrigin="anonymous" src={reportData.image1} className="w-full h-full object-contain" /> : <div className="text-slate-100 text-4xl font-black italic opacity-20">FactDot IMAGE</div>}
                                  </div>
                               </div>
                            </div>
                         ) : selectedType === 'type3' ? (
-                           <div className="flex-1 flex h-full relative">
+                           <div className="flex-1 flex h-full relative z-10">
                               <div className="flex-1 flex flex-col relative" style={{ backgroundColor: selectedSubCat.color }}>
-                                 <div className="p-5 pt-12 text-white flex-1 space-y-5 z-10">
+                                 <div className="p-5 pt-12 text-white flex-1 space-y-5 z-20">
                                     <h2 className="text-[20px] font-bold leading-[1.4] drop-shadow-sm">"{reportData.person1Quote || 'উক্তি'}"</h2>
                                     <div className="border-t border-white/20 pt-3">
                                        <span className="text-sm font-black block leading-[1.4]">- {isQuoteCompare2 ? (reportData.person2Name || 'নাম') : (reportData.person1Name || 'নাম')}</span>
@@ -847,13 +851,13 @@ const App: React.FC = () => {
                                     </div>
                                  </div>
                                  {!isQuoteCompare2 && (
-                                   <div className="h-[40%] w-full flex items-end">
-                                      {reportData.image1 && <img src={reportData.image1} className="w-full h-full object-contain object-bottom" />}
+                                   <div className="h-[40%] w-full flex items-end relative z-10">
+                                      {reportData.image1 && <img crossOrigin="anonymous" src={reportData.image1} className="w-full h-full object-contain object-bottom" />}
                                    </div>
                                  )}
                               </div>
                               <div className="flex-1 flex flex-col relative bg-white border-l border-slate-100">
-                                 <div className="p-5 pt-12 text-slate-800 flex-1 space-y-5 z-10">
+                                 <div className="p-5 pt-12 text-slate-800 flex-1 space-y-5 z-20">
                                     <h2 className="text-[20px] font-bold leading-[1.4]">"{reportData.person2Quote || 'উক্তি'}"</h2>
                                     <div className="border-t border-slate-100 pt-3">
                                        <span className="text-sm font-black block leading-[1.4] text-red-600">- {reportData.person2Name || 'নাম'}</span>
@@ -861,15 +865,16 @@ const App: React.FC = () => {
                                     </div>
                                  </div>
                                  {!isQuoteCompare2 && (
-                                   <div className="h-[40%] w-full flex items-end">
-                                      {reportData.image2 && <img src={reportData.image2} className="w-full h-full object-contain object-bottom" />}
+                                   <div className="h-[40%] w-full flex items-end relative z-10">
+                                      {reportData.image2 && <img crossOrigin="anonymous" src={reportData.image2} className="w-full h-full object-contain object-bottom" />}
                                    </div>
                                  )}
                               </div>
                               {isQuoteCompare2 && (
-                                <div className="absolute bottom-0 left-0 w-full h-[55%] flex items-end justify-center pointer-events-none z-20 overflow-hidden">
+                                <div className="absolute bottom-0 left-0 w-full h-[55%] flex items-end justify-center pointer-events-none z-30 overflow-hidden">
                                   {reportData.image1 && (
                                     <img 
+                                      crossOrigin="anonymous"
                                       src={reportData.image1} 
                                       className="max-h-full max-w-[90%] object-contain object-bottom drop-shadow-xl" 
                                       alt="Person"
@@ -879,20 +884,20 @@ const App: React.FC = () => {
                               )}
                            </div>
                         ) : isType2 ? (
-                           <div className="flex-1 flex flex-col pt-6 space-y-6">
-                              <div className={`grid ${isType2TwoImages ? 'grid-cols-2 gap-3 px-4' : 'grid-cols-1 px-8'} h-48`}>
+                           <div className="flex-1 flex flex-col pt-6 space-y-6 z-10">
+                              <div className={`grid ${isType2TwoImages ? 'grid-cols-2 gap-3 px-4' : 'grid-cols-1 px-8'} h-48 relative z-10`}>
                                  <div className="bg-white rounded-[1.5rem] overflow-hidden border border-slate-100 shadow-sm flex items-center justify-center relative">
-                                    {reportData.image1 ? <img src={reportData.image1} className="w-full h-full object-contain p-2" /> : <div className="text-slate-100 font-black text-3xl italic">IMG 1</div>}
-                                    {selectedSubCat.id === 'claim_truth' && <span className="absolute top-3 left-3 bg-[#e11d48] text-white text-[10px] font-black px-2 py-0.5 rounded-md shadow-sm uppercase">দাবি</span>}
+                                    {reportData.image1 ? <img crossOrigin="anonymous" src={reportData.image1} className="w-full h-full object-contain p-2" /> : <div className="text-slate-100 font-black text-3xl italic">IMG 1</div>}
+                                    {selectedSubCat.id === 'claim_truth' && <span className="absolute top-3 left-3 bg-[#e11d48] text-white text-[10px] font-black px-2 py-0.5 rounded-md shadow-sm uppercase z-20">দাবি</span>}
                                  </div>
                                  {isType2TwoImages && (
                                     <div className="bg-white rounded-[1.5rem] overflow-hidden border border-slate-100 shadow-sm flex items-center justify-center relative">
-                                       {reportData.image2 ? <img src={reportData.image2} className="w-full h-full object-contain p-2" /> : <div className="text-slate-100 font-black text-3xl italic">IMG 2</div>}
-                                       {selectedSubCat.id === 'claim_truth' && <span className="absolute top-3 left-3 bg-[#10b981] text-white text-[10px] font-black px-2 py-0.5 rounded-md shadow-sm uppercase">বাস্তবতা</span>}
+                                       {reportData.image2 ? <img crossOrigin="anonymous" src={reportData.image2} className="w-full h-full object-contain p-2" /> : <div className="text-slate-100 font-black text-3xl italic">IMG 2</div>}
+                                       {selectedSubCat.id === 'claim_truth' && <span className="absolute top-3 left-3 bg-[#10b981] text-white text-[10px] font-black px-2 py-0.5 rounded-md shadow-sm uppercase z-20">বাস্তবতা</span>}
                                     </div>
                                  )}
                               </div>
-                              <div className="flex-1 flex flex-col justify-start items-center px-8 pt-4">
+                              <div className="flex-1 flex flex-col justify-start items-center px-8 pt-4 relative z-20">
                                   <div className="bg-white p-6 rounded-[2rem] border border-slate-50 w-full text-center space-y-4">
                                       <h2 className="text-[26px] font-black text-[#b91c1c] leading-[1.4]">
                                          {reportData.title || 'শিরোনাম'}
@@ -904,18 +909,18 @@ const App: React.FC = () => {
                               </div>
                            </div>
                         ) : (
-                           <div className="flex-1 flex flex-col p-6 space-y-6">
-                              <div className={`grid ${reportData.image2 ? 'grid-cols-2 gap-3' : 'grid-cols-1'} h-48`}>
+                           <div className="flex-1 flex flex-col p-6 space-y-6 z-10">
+                              <div className={`grid ${reportData.image2 ? 'grid-cols-2 gap-3' : 'grid-cols-1'} h-48 relative z-10`}>
                                  <div className="bg-white rounded-xl overflow-hidden border shadow-md flex items-center justify-center relative">
-                                    {reportData.image1 && <img src={reportData.image1} className="w-full h-full object-contain p-1" />}
+                                    {reportData.image1 && <img crossOrigin="anonymous" src={reportData.image1} className="w-full h-full object-contain p-1" />}
                                  </div>
                                  {reportData.image2 && (
                                     <div className="bg-white rounded-xl overflow-hidden border shadow-md flex items-center justify-center relative">
-                                       {reportData.image2 && <img src={reportData.image2} className="w-full h-full object-contain p-1" />}
+                                       {reportData.image2 && <img crossOrigin="anonymous" src={reportData.image2} className="w-full h-full object-contain p-1" />}
                                     </div>
                                  )}
                               </div>
-                              <div className="text-center space-y-3 flex-1 flex flex-col justify-center">
+                              <div className="text-center space-y-3 flex-1 flex flex-col justify-center relative z-20">
                                  <h2 style={{ color: selectedSubCat.color }} className="text-[22px] font-black leading-[1.6] py-2">
                                     {reportData.title || 'শিরোনাম'}
                                  </h2>
@@ -927,7 +932,7 @@ const App: React.FC = () => {
                         )}
                     </div>
                     
-                    <div className="w-full h-16 bg-[#FFD700] flex flex-col items-center justify-center border-t border-black/5 relative z-30 flex-shrink-0">
+                    <div className="w-full h-16 bg-[#FFD700] flex flex-col items-center justify-center border-t border-black/5 relative z-40 flex-shrink-0">
                        <span className="text-[16px] font-black tracking-widest text-black uppercase">FACTDOT</span>
                        <span className="text-[10px] font-bold text-black/80 uppercase tracking-[0.2em] leading-normal">WWW.FACTDOT.COM</span>
                     </div>
