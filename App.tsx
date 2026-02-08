@@ -15,7 +15,8 @@ import {
   Info,
   Home,
   Share2,
-  XCircle
+  XCircle,
+  ZoomIn
 } from 'lucide-react';
 import { FactDotLogo } from './components/FactDotLogo';
 import { CATEGORIES } from './constants';
@@ -45,6 +46,8 @@ const getInitialReportData = (): ReportData => ({
   description: '',
   image1: null,
   image2: null,
+  image1Scale: 1,
+  image2Scale: 1,
   candidateImage1: null,
   candidateImage2: null,
   date: getCurrentDateBn(),
@@ -129,7 +132,11 @@ const App: React.FC = () => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setReportData(prev => ({ ...prev, [key]: reader.result as string }));
+        setReportData(prev => ({ 
+          ...prev, 
+          [key]: reader.result as string,
+          [key === 'image1' ? 'image1Scale' : 'image2Scale']: 1
+        }));
       };
       reader.readAsDataURL(file);
     }
@@ -158,32 +165,41 @@ const App: React.FC = () => {
         logging: false,
         width: 400,
         height: 500,
+        scrollX: 0,
+        scrollY: 0,
         onclone: (clonedDoc: Document) => {
           const el = clonedDoc.getElementById('report-preview');
           if (el) {
-              // Reset all potential problematic transforms and positioning
               el.style.transform = 'none';
               el.style.webkitTransform = 'none';
               el.style.margin = '0';
               el.style.padding = '0';
               el.style.width = '400px';
               el.style.height = '500px';
-              el.style.position = 'static';
+              el.style.position = 'fixed';
+              el.style.left = '0';
+              el.style.top = '0';
               el.style.display = 'flex';
               el.style.flexDirection = 'column';
               el.style.overflow = 'hidden';
 
-              // Force image containment in cloned document
               const imgs = el.getElementsByTagName('img');
               for (let i = 0; i < imgs.length; i++) {
                 const img = imgs[i] as HTMLImageElement;
-                img.style.maxWidth = '100%';
-                img.style.maxHeight = '100%';
-                img.style.objectFit = 'contain';
+                const scaleVal = img.getAttribute('data-scale') || '1';
+                const isSpecial = img.getAttribute('data-special') === 'true';
                 
-                // If the parent is a picture container, ensure it clips
+                img.style.objectFit = 'contain';
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.display = 'block';
+                img.style.position = 'relative';
+                img.style.transform = `scale(${scaleVal})`;
+                img.style.transformOrigin = isSpecial ? 'bottom center' : 'center center';
+                
                 if (img.parentElement) {
                   img.parentElement.style.overflow = 'hidden';
+                  img.parentElement.style.position = 'relative';
                   img.parentElement.style.display = 'flex';
                   img.parentElement.style.alignItems = 'center';
                   img.parentElement.style.justifyContent = 'center';
@@ -270,6 +286,57 @@ const App: React.FC = () => {
       >
         <XCircle size={18} />
       </button>
+    );
+  };
+
+  const ImageZoomSlider = ({ field, scaleField }: { field: keyof ReportData, scaleField: 'image1Scale' | 'image2Scale' }) => {
+    if (!reportData[field]) return null;
+    return (
+      <div className="mt-3 px-1">
+        <div className="flex items-center justify-between mb-1">
+          <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider flex items-center gap-1.5">
+            <ZoomIn size={12} className="text-indigo-500" /> ইমেজ জুম ({toBn(Math.round(reportData[scaleField] * 100))}%)
+          </label>
+          <button 
+            onClick={() => setReportData(prev => ({ ...prev, [scaleField]: 1 }))}
+            className="text-[10px] font-bold text-indigo-500 hover:underline"
+          >
+            রিসেট
+          </button>
+        </div>
+        <input 
+          type="range" 
+          min="0.1" 
+          max="3" 
+          step="0.05" 
+          value={reportData[scaleField]} 
+          onChange={(e) => setReportData(prev => ({ ...prev, [scaleField]: parseFloat(e.target.value) }))}
+          className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+        />
+      </div>
+    );
+  };
+
+  // Helper component for the preview images with reliably captured scaling
+  const ScalablePreviewImage = ({ src, scale, isSpecial = false }: { src: string | null, scale: number, isSpecial?: boolean }) => {
+    if (!src) return <div className="text-slate-100 font-black text-3xl italic opacity-20">FactDot IMAGE</div>;
+    return (
+      <div className="w-full h-full flex items-center justify-center overflow-hidden relative">
+        <img 
+          crossOrigin="anonymous" 
+          src={src} 
+          data-scale={scale} 
+          data-special={isSpecial}
+          style={{ 
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+            transform: `scale(${scale})`,
+            transformOrigin: isSpecial ? 'bottom center' : 'center center',
+          }} 
+          alt="Preview"
+        />
+      </div>
     );
   };
 
@@ -457,15 +524,16 @@ const App: React.FC = () => {
                            <div className="space-y-2">
                               <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-blue-200 rounded-xl cursor-pointer bg-white hover:border-blue-400 overflow-hidden relative group">
                                  {reportData.image1 ? (
-                                   <>
-                                     <img crossOrigin="anonymous" src={reportData.image1} className="w-full h-full object-contain" />
-                                     <button type="button" onClick={() => removeImage('image1')} className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                                       <Trash2 size={12} />
-                                     </button>
-                                   </>
+                                   <div className="w-full h-full relative overflow-hidden flex items-center justify-center">
+                                      <img crossOrigin="anonymous" src={reportData.image1} className="w-full h-full object-contain relative z-0" />
+                                      <button type="button" onClick={() => removeImage('image1')} className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Trash2 size={12} />
+                                      </button>
+                                   </div>
                                  ) : <div className="text-[10px] font-black text-slate-300 text-center uppercase">ছবি ১</div>}
                                  <input key={`file-1-${resetCounter}`} type="file" className="hidden" onChange={(e) => handleImageUpload(e, 'image1')} />
                               </label>
+                              <ImageZoomSlider field="image1" scaleField="image1Scale" />
                            </div>
                         </div>
                         <div className="p-6 bg-red-50/30 rounded-2xl border border-red-100 space-y-4">
@@ -488,15 +556,16 @@ const App: React.FC = () => {
                            <div className="space-y-2">
                               <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-red-200 rounded-xl cursor-pointer bg-white hover:border-blue-400 overflow-hidden relative group">
                                  {reportData.image2 ? (
-                                   <>
-                                     <img crossOrigin="anonymous" src={reportData.image2} className="w-full h-full object-contain" />
-                                     <button type="button" onClick={() => removeImage('image2')} className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                                       <Trash2 size={12} />
-                                     </button>
-                                   </>
+                                   <div className="w-full h-full relative overflow-hidden flex items-center justify-center">
+                                      <img crossOrigin="anonymous" src={reportData.image2} className="w-full h-full object-contain relative z-0" />
+                                      <button type="button" onClick={() => removeImage('image2')} className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Trash2 size={12} />
+                                      </button>
+                                   </div>
                                  ) : <div className="text-[10px] font-black text-slate-300 text-center uppercase">ছবি ২</div>}
                                  <input key={`file-2-${resetCounter}`} type="file" className="hidden" onChange={(e) => handleImageUpload(e, 'image2')} />
                               </label>
+                              <ImageZoomSlider field="image2" scaleField="image2Scale" />
                            </div>
                         </div>
                       </div>
@@ -575,18 +644,16 @@ const App: React.FC = () => {
                             <span className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">
                                {isQuoteCompare2 ? 'আগে যা বলেছিলেন' : 'ব্যক্তি ১ (বাম)'}
                             </span>
-                            {!isQuoteCompare2 && (
-                              <div className="grid grid-cols-2 gap-3">
-                                <div className="relative">
-                                  <input type="text" placeholder="নাম" className={inputClasses} value={reportData.person1Name} onChange={(e) => setReportData({...reportData, person1Name: e.target.value})} />
-                                  <ClearButton field="person1Name" />
-                                </div>
-                                <div className="relative">
-                                  <input type="text" placeholder="পদবি/বিবরণ" className={inputClasses} value={reportData.person1Title} onChange={(e) => setReportData({...reportData, person1Title: e.target.value})} />
-                                  <ClearButton field="person1Title" />
-                                </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="relative">
+                                <input type="text" placeholder="নাম" className={inputClasses} value={reportData.person1Name} onChange={(e) => setReportData({...reportData, person1Name: e.target.value})} />
+                                <ClearButton field="person1Name" />
                               </div>
-                            )}
+                              <div className="relative">
+                                <input type="text" placeholder="পদবি/বিবরণ" className={inputClasses} value={reportData.person1Title} onChange={(e) => setReportData({...reportData, person1Title: e.target.value})} />
+                                <ClearButton field="person1Title" />
+                              </div>
+                            </div>
                             <div className="relative">
                               <textarea placeholder="উক্তি..." rows={3} className={textareaClasses} value={reportData.person1Quote} onChange={(e) => setReportData({...reportData, person1Quote: e.target.value})} />
                               <TextareaClearButton field="person1Quote" />
@@ -622,15 +689,16 @@ const App: React.FC = () => {
                             </label>
                             <label className="h-40 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center cursor-pointer bg-slate-50 hover:bg-white overflow-hidden relative group">
                               {reportData.image1 ? (
-                                <>
-                                  <img crossOrigin="anonymous" src={reportData.image1} className="h-full w-full object-contain" />
-                                  <button type="button" onClick={() => removeImage('image1')} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full">
+                                <div className="w-full h-full relative overflow-hidden flex items-center justify-center">
+                                  <img crossOrigin="anonymous" src={reportData.image1} className="h-full w-full object-contain relative z-0" />
+                                  <button type="button" onClick={() => removeImage('image1')} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <Trash2 size={14} />
                                   </button>
-                                </>
+                                </div>
                               ) : <Upload className="text-slate-300" size={28} />}
                               <input key={`main-file-1-${resetCounter}`} type="file" className="hidden" onChange={(e) => handleImageUpload(e, 'image1')} />
                             </label>
+                            <ImageZoomSlider field="image1" scaleField="image1Scale" />
                         </div>
                         {!isSingleImageOverall && (
                           <div className="space-y-2">
@@ -639,15 +707,16 @@ const App: React.FC = () => {
                               </label>
                               <label className="h-40 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center cursor-pointer bg-slate-50 hover:bg-white overflow-hidden relative group">
                                 {reportData.image2 ? (
-                                  <>
-                                    <img crossOrigin="anonymous" src={reportData.image2} className="h-full w-full object-contain" />
-                                    <button type="button" onClick={() => removeImage('image2')} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full">
+                                  <div className="w-full h-full relative overflow-hidden flex items-center justify-center">
+                                    <img crossOrigin="anonymous" src={reportData.image2} className="h-full w-full object-contain relative z-0" />
+                                    <button type="button" onClick={() => removeImage('image2')} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                                       <Trash2 size={14} />
                                     </button>
-                                  </>
+                                  </div>
                                 ) : <Upload className="text-slate-300" size={28} />}
                                 <input key={`main-file-2-${resetCounter}`} type="file" className="hidden" onChange={(e) => handleImageUpload(e, 'image2')} />
                               </label>
+                              <ImageZoomSlider field="image2" scaleField="image2Scale" />
                           </div>
                         )}
                       </div>
@@ -686,7 +755,7 @@ const App: React.FC = () => {
                            <h4 className="text-white text-[28px] font-black tracking-tight">নির্বাচনী ফলাফল ২০২৬</h4>
                         </div>
                     ) : (selectedType !== 'type3' && !isType1News && !isType1News2) && (
-                        <div style={{ backgroundColor: selectedSubCat.color }} className="w-full min-h-[56px] flex items-center justify-center relative z-30 px-4 py-3 shrink-0">
+                        <div style={{ backgroundColor: selectedSubCat.color }} className="w-full h-[56px] flex items-center justify-center relative z-30 px-4 py-3 shrink-0">
                            <h4 className="text-white text-[28px] font-black uppercase tracking-widest leading-[1.4] text-center">
                               {selectedSubCat.label}
                            </h4>
@@ -714,21 +783,21 @@ const App: React.FC = () => {
                         {/* LAYOUTS */}
                         {isNewsCardType4 ? (
                            <div className="flex-1 flex items-center justify-center px-6 z-10">
-                              <div className="w-full bg-white rounded-[1.5rem] border-2 border-[#1e293b] p-8 text-center relative">
-                                 <h2 className="text-[30px] font-black text-[#1e293b] leading-[1.3] tracking-tight">
+                              <div className="w-full bg-white rounded-[1.5rem] border-2 border-[#1e293b] p-8 text-center relative overflow-hidden">
+                                 <h2 className="text-[30px] font-black text-[#1e293b] leading-[1.3] tracking-tight relative z-30">
                                     {reportData.title || 'শিরোনাম এখানে দেখা যাবে'}
                                  </h2>
                               </div>
                            </div>
                         ) : isResult1 ? (
                            <div className="flex-1 flex flex-col items-center pt-4 h-full z-10">
-                              <div className="w-[85%] bg-white rounded-2xl border border-slate-100 shadow-sm p-4 text-center mb-6 relative z-20">
-                                 <h2 className="text-[28px] font-black text-slate-900 leading-tight">{reportData.title || "দেশ/সংস্থা"}</h2>
+                              <div className="w-[85%] bg-white rounded-2xl border border-slate-100 shadow-sm p-4 text-center mb-6 relative z-30 overflow-hidden">
+                                 <h2 className="text-[28px] font-black text-slate-900 leading-tight relative z-10">{reportData.title || "দেশ/সংস্থা"}</h2>
                               </div>
                               <div className="flex-1 w-full grid grid-cols-2 px-4 gap-8">
                                  <div className="flex flex-col items-center space-y-4">
-                                    <div className="w-24 h-24 rounded-full border-2 border-slate-50 shadow-md flex items-center justify-center overflow-hidden bg-white shrink-0">
-                                       {reportData.image1 ? <img crossOrigin="anonymous" src={reportData.image1} className="w-full h-full object-contain" /> : <div className="text-slate-100 italic">M1</div>}
+                                    <div className="w-24 h-24 rounded-full border-2 border-slate-50 shadow-md flex items-center justify-center overflow-hidden bg-white shrink-0 relative">
+                                       <ScalablePreviewImage src={reportData.image1} scale={reportData.image1Scale} />
                                     </div>
                                     <span className="text-[18px] font-black text-slate-800">{reportData.party1MarkerName || "মার্কার নাম"}</span>
                                     <div className="flex flex-col items-center pt-2">
@@ -737,8 +806,8 @@ const App: React.FC = () => {
                                     </div>
                                  </div>
                                  <div className="flex flex-col items-center space-y-4">
-                                    <div className="w-24 h-24 rounded-full border-2 border-slate-50 shadow-md flex items-center justify-center overflow-hidden bg-white shrink-0">
-                                       {reportData.image2 ? <img crossOrigin="anonymous" src={reportData.image2} className="w-full h-full object-contain" /> : <div className="text-slate-100 italic">M2</div>}
+                                    <div className="w-24 h-24 rounded-full border-2 border-slate-50 shadow-md flex items-center justify-center overflow-hidden bg-white shrink-0 relative">
+                                       <ScalablePreviewImage src={reportData.image2} scale={reportData.image2Scale} />
                                     </div>
                                     <span className="text-[18px] font-black text-slate-800">{reportData.party2MarkerName || "মার্কার নাম"}</span>
                                     <div className="flex flex-col items-center pt-2">
@@ -750,14 +819,14 @@ const App: React.FC = () => {
                            </div>
                         ) : isResult2 ? (
                            <div className="flex-1 flex flex-col items-center pt-4 h-full px-4 pb-2 z-10">
-                              <div className="w-full bg-white rounded-2xl border border-slate-100 shadow-sm p-3 text-center mb-4 shrink-0 relative z-20">
-                                 <h2 className="text-[24px] font-black text-slate-900 leading-tight">{reportData.title || "আসন নাম"}</h2>
+                              <div className="w-full bg-white rounded-2xl border border-slate-100 shadow-sm p-3 text-center mb-4 shrink-0 relative z-30 overflow-hidden">
+                                 <h2 className="text-[24px] font-black text-slate-900 leading-tight relative z-10">{reportData.title || "আসন নাম"}</h2>
                               </div>
                               <div className="flex-1 w-full grid grid-cols-2 divide-x divide-slate-100 mb-2">
                                  <div className="flex flex-col items-center p-2 space-y-3">
                                     <span className="text-[18px] font-black text-slate-800 text-center h-10 flex items-center leading-tight line-clamp-2">{reportData.party1MarkerName || "মার্কার নাম"}</span>
-                                    <div className="w-20 h-20 rounded-2xl bg-white border p-1 shadow-sm overflow-hidden flex items-center justify-center shrink-0">
-                                       {reportData.image1 ? <img crossOrigin="anonymous" src={reportData.image1} className="w-full h-full object-contain" /> : <div className="text-slate-100 italic text-[10px]">IMG</div>}
+                                    <div className="w-20 h-20 rounded-2xl bg-white border p-1 shadow-sm overflow-hidden flex items-center justify-center shrink-0 relative">
+                                       <ScalablePreviewImage src={reportData.image1} scale={reportData.image1Scale} />
                                     </div>
                                     <div className="flex flex-col items-center leading-none">
                                        <span className="text-[42px] font-black text-[#1e3a8a] leading-none">{reportData.party1Seats || toBn(0)}</span>
@@ -766,8 +835,8 @@ const App: React.FC = () => {
                                  </div>
                                  <div className="flex flex-col items-center p-2 space-y-3">
                                     <span className="text-[18px] font-black text-slate-800 text-center h-10 flex items-center leading-tight line-clamp-2">{reportData.party2MarkerName || "মার্কার নাম"}</span>
-                                    <div className="w-20 h-20 rounded-2xl bg-white border p-1 shadow-sm overflow-hidden flex items-center justify-center shrink-0">
-                                       {reportData.image2 ? <img crossOrigin="anonymous" src={reportData.image2} className="w-full h-full object-contain" /> : <div className="text-slate-100 italic text-[10px]">IMG</div>}
+                                    <div className="w-20 h-20 rounded-2xl bg-white border p-1 shadow-sm overflow-hidden flex items-center justify-center shrink-0 relative">
+                                       <ScalablePreviewImage src={reportData.image2} scale={reportData.image2Scale} />
                                     </div>
                                     <div className="flex flex-col items-center leading-none">
                                        <span className="text-[42px] font-black text-[#dc2626] leading-none">{reportData.party2Seats || toBn(0)}</span>
@@ -775,31 +844,31 @@ const App: React.FC = () => {
                                     </div>
                                  </div>
                               </div>
-                              <div className="w-full px-4 py-3 text-center border-t border-slate-50 mt-auto shrink-0 relative z-20 bg-white/90">
-                                 <h3 className="text-[20px] font-black text-slate-900 leading-tight">
+                              <div className="w-full px-4 py-3 text-center border-t border-slate-50 mt-auto shrink-0 relative z-30 bg-white/90 overflow-hidden">
+                                 <h3 className="text-[20px] font-black text-slate-900 leading-tight relative z-10">
                                     {reportData.winnerMarkerName || reportData.party1MarkerName || "বিজয়ী দল"} এগিয়ে আছে {voteDiff} ভোটে
                                  </h3>
                               </div>
                            </div>
                         ) : isFactCheck ? (
                            <div className="flex-1 flex flex-col p-4 space-y-6 z-10">
-                              <div className="grid grid-cols-2 gap-4 h-48 items-center shrink-0">
+                              <div className="grid grid-cols-2 gap-4 items-center shrink-0 relative z-20" style={{ height: '192px' }}>
                                   <div className="bg-white h-full rounded-sm shadow-md border border-slate-100 flex items-center justify-center overflow-hidden relative">
-                                      {reportData.image1 ? <img crossOrigin="anonymous" src={reportData.image1} className="w-full h-full object-contain" /> : <div className="text-slate-100 font-black text-3xl italic">IMG 1</div>}
+                                      <ScalablePreviewImage src={reportData.image1} scale={reportData.image1Scale} />
                                   </div>
                                   <div className="bg-white h-full rounded-sm shadow-md border border-slate-100 flex items-center justify-center overflow-hidden relative">
-                                      {reportData.image2 ? <img crossOrigin="anonymous" src={reportData.image2} className="w-full h-full object-contain" /> : <div className="text-slate-100 font-black text-3xl italic">IMG 2</div>}
+                                      <ScalablePreviewImage src={reportData.image2} scale={reportData.image2Scale} />
                                   </div>
                               </div>
-                              <div className="flex-1 flex flex-col justify-center items-center px-4 relative z-20">
-                                  <h2 className="text-[30px] font-black text-[#b91c1c] leading-[1.3] text-center py-2">
+                              <div className="flex-1 flex flex-col justify-center items-center px-4 relative z-30 overflow-hidden">
+                                  <h2 className="text-[30px] font-black text-[#b91c1c] leading-[1.3] text-center py-2 relative z-10">
                                      {reportData.title || 'শিরোনাম এখানে দেখা যাবে'}
                                   </h2>
                               </div>
                            </div>
                         ) : isType1News ? (
                            <div className="flex-1 flex flex-col p-6 h-full relative z-10">
-                              <div className="flex justify-between items-center mb-6 relative z-30">
+                              <div className="flex justify-between items-center mb-6 relative z-40">
                                  <div className="flex items-center gap-2">
                                     <div className="text-[#057a44]">
                                        <FactDotLogo size={32} />
@@ -811,23 +880,40 @@ const App: React.FC = () => {
                                     <span className="block text-[10px] font-black pt-0.5">{reportData.date || 'তারিখ'}</span>
                                  </div>
                               </div>
-                              <div className="z-30 space-y-3 mb-4">
-                                 <h2 className="text-[24px] font-black text-slate-800 leading-[1.3]">"{reportData.title || 'শিরোনাম'}"</h2>
-                                 <p className="text-[16px] font-bold text-slate-600 leading-[1.4]">{reportData.description || 'বিস্তারিত বিবরণ...'}</p>
+                              <div className="z-40 space-y-3 mb-4 overflow-hidden relative">
+                                 <h2 className="text-[24px] font-black text-slate-800 leading-[1.3] relative z-10">"{reportData.title || 'শিরোনাম'}"</h2>
+                                 <p className="text-[16px] font-bold text-slate-600 leading-[1.4] relative z-10">{reportData.description || 'বিস্তারিত বিবরণ...'}</p>
                               </div>
-                              <div className="flex-1 min-h-0 relative z-10 mt-auto flex">
-                                 <div className="mt-auto pb-4 w-[60%] z-40">
+                              <div className="flex-1 min-h-0 relative z-20 mt-auto flex">
+                                 <div className="mt-auto pb-4 w-[60%] z-40 relative">
                                     <span className="text-lg font-black text-slate-800 block leading-tight">- {reportData.person1Name || 'নাম'}</span>
                                     <span className="text-[11px] font-bold text-slate-500 block leading-[1.3]">{reportData.person1Title || 'পদবি'}</span>
                                  </div>
                                  <div className="absolute bottom-0 right-0 h-full w-[65%] flex items-end justify-end z-20 overflow-hidden">
-                                    {reportData.image1 && <img crossOrigin="anonymous" src={reportData.image1} className="max-h-full max-w-full object-contain object-bottom" />}
+                                    {reportData.image1 && (
+                                       <img 
+                                          crossOrigin="anonymous" 
+                                          src={reportData.image1} 
+                                          data-scale={reportData.image1Scale} 
+                                          style={{ 
+                                             position: 'absolute',
+                                             bottom: 0,
+                                             right: 0,
+                                             width: '100%',
+                                             height: '100%',
+                                             objectFit: 'contain',
+                                             transform: `scale(${reportData.image1Scale})`,
+                                             transformOrigin: 'bottom right'
+                                          }} 
+                                          alt="Spokesperson"
+                                       />
+                                    )}
                                  </div>
                               </div>
                            </div>
                         ) : isType1News2 ? (
                            <div className="flex-1 flex flex-col h-full bg-white relative z-10">
-                              <div className="flex justify-between p-6 pb-2 items-start relative z-30">
+                              <div className="flex justify-between p-6 pb-2 items-start relative z-40">
                                  <div className="flex items-center gap-2">
                                     <div className="text-[#057a44]">
                                        <FactDotLogo size={32} />
@@ -843,50 +929,50 @@ const App: React.FC = () => {
                                  </div>
                               </div>
 
-                              <div className="px-6 py-8 text-center flex flex-col justify-center gap-2 relative z-30">
-                                 <h2 className="text-[32px] font-black text-slate-800 leading-[1.2] tracking-tight">
+                              <div className="px-6 py-8 text-center flex flex-col justify-center gap-2 relative z-40 overflow-hidden">
+                                 <h2 className="text-[32px] font-black text-slate-800 leading-[1.2] tracking-tight relative z-10">
                                     "{reportData.title || 'প্রথম শিরোনাম'}"
                                  </h2>
                                  {reportData.redTitle && (
-                                    <h3 className="text-[32px] font-black text-[#e11d48] leading-[1.1] tracking-tight mt-1">
+                                    <h3 className="text-[32px] font-black text-[#e11d48] leading-[1.1] tracking-tight mt-1 relative z-10">
                                        {reportData.redTitle}
                                     </h3>
                                  )}
                               </div>
 
-                              <div className="flex-1 w-full px-6 pb-8 mt-auto z-10 overflow-hidden">
-                                 <div className="bg-slate-50 border border-slate-100 rounded-sm overflow-hidden flex items-center justify-center h-48 w-full relative">
-                                    {reportData.image1 ? <img crossOrigin="anonymous" src={reportData.image1} className="w-full h-full object-contain" /> : <div className="text-slate-100 text-4xl font-black italic opacity-20">FactDot IMAGE</div>}
+                              <div className="flex-1 w-full px-6 pb-8 mt-auto z-20 overflow-hidden">
+                                 <div className="bg-slate-50 border border-slate-100 rounded-sm overflow-hidden flex items-center justify-center w-full relative" style={{ height: '192px' }}>
+                                    <ScalablePreviewImage src={reportData.image1} scale={reportData.image1Scale} />
                                  </div>
                               </div>
                            </div>
                         ) : selectedType === 'type3' ? (
                            <div className="flex-1 flex h-full relative z-10">
                               <div className="flex-1 flex flex-col relative overflow-hidden" style={{ backgroundColor: selectedSubCat.color }}>
-                                 <div className="p-5 pt-12 text-white flex-1 space-y-5 z-20">
-                                    <h2 className="text-[20px] font-bold leading-[1.4] drop-shadow-sm">"{reportData.person1Quote || 'উক্তি'}"</h2>
-                                    <div className="border-t border-white/20 pt-3">
-                                       <span className="text-sm font-black block leading-[1.4]">- {isQuoteCompare2 ? (reportData.person2Name || 'নাম') : (reportData.person1Name || 'নাম')}</span>
-                                       <span className="text-[10px] opacity-70 font-bold uppercase block leading-[1.4]">{isQuoteCompare2 ? reportData.person2Title : reportData.person1Title || 'পদবি'}</span>
+                                 <div className="p-5 pt-12 text-white flex-1 space-y-5 z-40 overflow-hidden relative">
+                                    <h2 className="text-[20px] font-bold leading-[1.4] drop-shadow-sm relative z-10">"{reportData.person1Quote || 'উক্তি'}"</h2>
+                                    <div className="border-t border-white/20 pt-3 relative z-10">
+                                       <span className="text-sm font-black block leading-[1.4] text-white">- {reportData.person1Name || 'নাম'}</span>
+                                       <span className="text-[10px] opacity-70 font-bold uppercase block leading-[1.4]">{reportData.person1Title || 'পদবি'}</span>
                                     </div>
                                  </div>
                                  {!isQuoteCompare2 && (
-                                   <div className="h-40 w-full flex items-end relative z-10 overflow-hidden">
-                                      {reportData.image1 && <img crossOrigin="anonymous" src={reportData.image1} className="w-full h-full object-contain object-bottom" />}
+                                   <div className="w-full flex items-end relative z-20 overflow-hidden" style={{ height: '160px' }}>
+                                      <ScalablePreviewImage src={reportData.image1} scale={reportData.image1Scale} />
                                    </div>
                                  )}
                               </div>
                               <div className="flex-1 flex flex-col relative bg-white border-l border-slate-100 overflow-hidden">
-                                 <div className="p-5 pt-12 text-slate-800 flex-1 space-y-5 z-20">
-                                    <h2 className="text-[20px] font-bold leading-[1.4]">"{reportData.person2Quote || 'উক্তি'}"</h2>
-                                    <div className="border-t border-slate-100 pt-3">
+                                 <div className="p-5 pt-12 text-slate-800 flex-1 space-y-5 z-40 overflow-hidden relative">
+                                    <h2 className="text-[20px] font-bold leading-[1.4] relative z-10">"{reportData.person2Quote || 'উক্তি'}"</h2>
+                                    <div className="border-t border-slate-100 pt-3 relative z-10">
                                        <span className="text-sm font-black block leading-[1.4] text-red-600">- {reportData.person2Name || 'নাম'}</span>
                                        <span className="text-[10px] text-slate-400 font-bold uppercase block leading-[1.4]">{reportData.person2Title || 'পদবি'}</span>
                                     </div>
                                  </div>
                                  {!isQuoteCompare2 && (
-                                   <div className="h-40 w-full flex items-end relative z-10 overflow-hidden">
-                                      {reportData.image2 && <img crossOrigin="anonymous" src={reportData.image2} className="w-full h-full object-contain object-bottom" />}
+                                   <div className="w-full flex items-end relative z-20 overflow-hidden" style={{ height: '160px' }}>
+                                      <ScalablePreviewImage src={reportData.image2} scale={reportData.image2Scale} />
                                    </div>
                                  )}
                               </div>
@@ -896,7 +982,19 @@ const App: React.FC = () => {
                                     <img 
                                       crossOrigin="anonymous"
                                       src={reportData.image1} 
-                                      className="max-h-full max-w-[90%] object-contain object-bottom drop-shadow-xl" 
+                                      data-scale={reportData.image1Scale} 
+                                      data-special="true"
+                                      style={{ 
+                                         position: 'absolute',
+                                         bottom: 0,
+                                         left: '50%',
+                                         width: '100%',
+                                         height: '100%',
+                                         objectFit: 'contain',
+                                         transform: `translateX(-50%) scale(${reportData.image1Scale})`,
+                                         transformOrigin: 'bottom center'
+                                      }}
+                                      className="drop-shadow-xl" 
                                       alt="Person"
                                     />
                                   )}
@@ -905,24 +1003,24 @@ const App: React.FC = () => {
                            </div>
                         ) : isType2 ? (
                            <div className="flex-1 flex flex-col pt-6 space-y-6 z-10">
-                              <div className={`grid ${isType2TwoImages ? 'grid-cols-2 gap-3 px-4' : 'grid-cols-1 px-8'} h-48 relative z-10`}>
+                              <div className={`grid ${isType2TwoImages ? 'grid-cols-2 gap-3 px-4' : 'grid-cols-1 px-8'} relative z-20`} style={{ height: '192px' }}>
                                  <div className="bg-white rounded-[1.5rem] overflow-hidden border border-slate-100 shadow-sm flex items-center justify-center relative">
-                                    {reportData.image1 ? <img crossOrigin="anonymous" src={reportData.image1} className="w-full h-full object-contain p-2" /> : <div className="text-slate-100 font-black text-3xl italic">IMG 1</div>}
-                                    {selectedSubCat.id === 'claim_truth' && <span className="absolute top-3 left-3 bg-[#e11d48] text-white text-[10px] font-black px-2 py-0.5 rounded-md shadow-sm uppercase z-20">দাবি</span>}
+                                    <ScalablePreviewImage src={reportData.image1} scale={reportData.image1Scale} />
+                                    {selectedSubCat.id === 'claim_truth' && <span className="absolute top-3 left-3 bg-[#e11d48] text-white text-[10px] font-black px-2 py-0.5 rounded-md shadow-sm uppercase z-40">দাবি</span>}
                                  </div>
                                  {isType2TwoImages && (
                                     <div className="bg-white rounded-[1.5rem] overflow-hidden border border-slate-100 shadow-sm flex items-center justify-center relative">
-                                       {reportData.image2 ? <img crossOrigin="anonymous" src={reportData.image2} className="w-full h-full object-contain p-2" /> : <div className="text-slate-100 font-black text-3xl italic">IMG 2</div>}
-                                       {selectedSubCat.id === 'claim_truth' && <span className="absolute top-3 left-3 bg-[#10b981] text-white text-[10px] font-black px-2 py-0.5 rounded-md shadow-sm uppercase z-20">বাস্তবতা</span>}
+                                       <ScalablePreviewImage src={reportData.image2} scale={reportData.image2Scale} />
+                                       {selectedSubCat.id === 'claim_truth' && <span className="absolute top-3 left-3 bg-[#10b981] text-white text-[10px] font-black px-2 py-0.5 rounded-md shadow-sm uppercase z-40">বাস্তবতা</span>}
                                     </div>
                                  )}
                               </div>
-                              <div className="flex-1 flex flex-col justify-start items-center px-8 pt-4 relative z-20">
-                                  <div className="bg-white p-6 rounded-[2rem] border border-slate-50 w-full text-center space-y-4">
-                                      <h2 className="text-[26px] font-black text-[#b91c1c] leading-[1.4]">
+                              <div className="flex-1 flex flex-col justify-start items-center px-8 pt-4 relative z-30 overflow-hidden">
+                                  <div className="bg-white p-6 rounded-[2rem] border border-slate-50 w-full text-center space-y-4 relative z-10">
+                                      <h2 className="text-[26px] font-black text-[#b91c1c] leading-[1.4] relative z-10">
                                          {reportData.title || 'শিরোনাম'}
                                       </h2>
-                                      <p className="text-[14px] font-bold text-slate-500 leading-[1.6] italic">
+                                      <p className="text-[14px] font-bold text-slate-500 leading-[1.6] italic relative z-10">
                                          {reportData.description || 'রিপোর্টের বিস্তারিত ব্যাখ্যা এখানে থাকবে।'}
                                       </p>
                                   </div>
@@ -930,21 +1028,21 @@ const App: React.FC = () => {
                            </div>
                         ) : (
                            <div className="flex-1 flex flex-col p-6 space-y-6 z-10">
-                              <div className={`grid ${reportData.image2 ? 'grid-cols-2 gap-3' : 'grid-cols-1'} h-48 relative z-10`}>
-                                 <div className="bg-white rounded-xl overflow-hidden border shadow-md flex items-center justify-center relative">
-                                    {reportData.image1 && <img crossOrigin="anonymous" src={reportData.image1} className="w-full h-full object-contain p-1" />}
+                              <div className={`grid ${reportData.image2 ? 'grid-cols-2 gap-3' : 'grid-cols-1'} relative z-20`} style={{ height: '192px' }}>
+                                 <div className="bg-white rounded-xl overflow-hidden border shadow-md flex items-center justify-center relative h-full">
+                                    <ScalablePreviewImage src={reportData.image1} scale={reportData.image1Scale} />
                                  </div>
                                  {reportData.image2 && (
-                                    <div className="bg-white rounded-xl overflow-hidden border shadow-md flex items-center justify-center relative">
-                                       {reportData.image2 && <img crossOrigin="anonymous" src={reportData.image2} className="w-full h-full object-contain p-1" />}
+                                    <div className="bg-white rounded-xl overflow-hidden border shadow-md flex items-center justify-center relative h-full">
+                                       <ScalablePreviewImage src={reportData.image2} scale={reportData.image2Scale} />
                                     </div>
                                  )}
                               </div>
-                              <div className="text-center space-y-3 flex-1 flex flex-col justify-center relative z-20">
-                                 <h2 style={{ color: selectedSubCat.color }} className="text-[22px] font-black leading-[1.6] py-2">
+                              <div className="text-center space-y-3 flex-1 flex flex-col justify-center relative z-30 overflow-hidden">
+                                 <h2 style={{ color: selectedSubCat.color }} className="text-[22px] font-black leading-[1.6] py-2 relative z-10">
                                     {reportData.title || 'শিরোনাম'}
                                  </h2>
-                                 <p className="text-[13px] font-bold text-slate-700 leading-[1.6] italic opacity-80 line-clamp-3">
+                                 <p className="text-[13px] font-bold text-slate-700 leading-[1.6] italic opacity-80 line-clamp-3 relative z-10">
                                     {reportData.description || 'বিস্তারিত এখানে থাকবে।'}
                                  </p>
                               </div>
@@ -952,7 +1050,7 @@ const App: React.FC = () => {
                         )}
                     </div>
                     
-                    <div className="w-full h-16 bg-[#FFD700] flex flex-col items-center justify-center border-t border-black/5 relative z-40 flex-shrink-0">
+                    <div className="w-full h-16 bg-[#FFD700] flex flex-col items-center justify-center border-t border-black/5 relative z-50 flex-shrink-0">
                        <span className="text-[16px] font-black tracking-widest text-black uppercase">FACTDOT</span>
                        <span className="text-[10px] font-bold text-black/80 uppercase tracking-[0.2em] leading-normal">WWW.FACTDOT.COM</span>
                     </div>
@@ -1007,6 +1105,17 @@ const App: React.FC = () => {
         @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-in { animation: fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .perspective-1000 { perspective: 1000px; }
+        
+        input[type=range]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          height: 16px;
+          width: 16px;
+          border-radius: 50%;
+          background: #4f46e5;
+          cursor: pointer;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          border: 2px solid white;
+        }
       ` }} />
     </div>
   );

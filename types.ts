@@ -16,6 +16,8 @@ export interface ReportData {
   description: string;
   image1: string | null;
   image2: string | null;
+  image1Scale: number;
+  image2Scale: number;
   candidateImage1: string | null;
   candidateImage2: string | null;
   date: string;
