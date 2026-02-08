@@ -156,19 +156,39 @@ const App: React.FC = () => {
         allowTaint: false,
         backgroundColor: '#FFFFFF',
         logging: false,
-        scrollY: -window.scrollY,
+        width: 400,
+        height: 500,
         onclone: (clonedDoc: Document) => {
           const el = clonedDoc.getElementById('report-preview');
           if (el) {
-              // Ensure the element is perfectly positioned and sized for capture
+              // Reset all potential problematic transforms and positioning
               el.style.transform = 'none';
               el.style.webkitTransform = 'none';
-              el.style.overflow = 'visible';
               el.style.margin = '0';
               el.style.padding = '0';
               el.style.width = '400px';
               el.style.height = '500px';
               el.style.position = 'static';
+              el.style.display = 'flex';
+              el.style.flexDirection = 'column';
+              el.style.overflow = 'hidden';
+
+              // Force image containment in cloned document
+              const imgs = el.getElementsByTagName('img');
+              for (let i = 0; i < imgs.length; i++) {
+                const img = imgs[i] as HTMLImageElement;
+                img.style.maxWidth = '100%';
+                img.style.maxHeight = '100%';
+                img.style.objectFit = 'contain';
+                
+                // If the parent is a picture container, ensure it clips
+                if (img.parentElement) {
+                  img.parentElement.style.overflow = 'hidden';
+                  img.parentElement.style.display = 'flex';
+                  img.parentElement.style.alignItems = 'center';
+                  img.parentElement.style.justifyContent = 'center';
+                }
+              }
           }
         }
       });
@@ -649,7 +669,7 @@ const App: React.FC = () => {
                   >
                     {/* TOP STATUS BAR / LABEL */}
                     {isFactCheck ? (
-                        <div className="w-full h-16 flex z-30">
+                        <div className="w-full h-16 flex z-30 shrink-0">
                            <div className="flex-1 bg-[#b91c1c] flex items-center justify-center py-2">
                               <h4 className="text-white text-3xl font-black">গুজব</h4>
                            </div>
@@ -658,15 +678,15 @@ const App: React.FC = () => {
                            </div>
                         </div>
                     ) : isNewsCardType4 ? (
-                        <div className="w-full h-16 bg-[#b91c1c] flex items-center justify-center relative z-30">
+                        <div className="w-full h-16 bg-[#b91c1c] flex items-center justify-center relative z-30 shrink-0">
                            <h4 className="text-white text-[28px] font-black">{selectedSubCat.label}</h4>
                         </div>
                     ) : isResultType ? (
-                        <div className="w-full h-16 bg-[#1e3a8a] flex items-center justify-center relative z-30">
+                        <div className="w-full h-16 bg-[#1e3a8a] flex items-center justify-center relative z-30 shrink-0">
                            <h4 className="text-white text-[28px] font-black tracking-tight">নির্বাচনী ফলাফল ২০২৬</h4>
                         </div>
                     ) : (selectedType !== 'type3' && !isType1News && !isType1News2) && (
-                        <div style={{ backgroundColor: selectedSubCat.color }} className="w-full min-h-[56px] flex items-center justify-center relative z-30 px-4 py-3">
+                        <div style={{ backgroundColor: selectedSubCat.color }} className="w-full min-h-[56px] flex items-center justify-center relative z-30 px-4 py-3 shrink-0">
                            <h4 className="text-white text-[28px] font-black uppercase tracking-widest leading-[1.4] text-center">
                               {selectedSubCat.label}
                            </h4>
@@ -763,11 +783,11 @@ const App: React.FC = () => {
                            </div>
                         ) : isFactCheck ? (
                            <div className="flex-1 flex flex-col p-4 space-y-6 z-10">
-                              <div className="grid grid-cols-2 gap-4 h-[55%] items-center">
-                                  <div className="bg-white aspect-square rounded-sm shadow-md border border-slate-100 flex items-center justify-center overflow-hidden">
+                              <div className="grid grid-cols-2 gap-4 h-48 items-center shrink-0">
+                                  <div className="bg-white h-full rounded-sm shadow-md border border-slate-100 flex items-center justify-center overflow-hidden relative">
                                       {reportData.image1 ? <img crossOrigin="anonymous" src={reportData.image1} className="w-full h-full object-contain" /> : <div className="text-slate-100 font-black text-3xl italic">IMG 1</div>}
                                   </div>
-                                  <div className="bg-white aspect-square rounded-sm shadow-md border border-slate-100 flex items-center justify-center overflow-hidden">
+                                  <div className="bg-white h-full rounded-sm shadow-md border border-slate-100 flex items-center justify-center overflow-hidden relative">
                                       {reportData.image2 ? <img crossOrigin="anonymous" src={reportData.image2} className="w-full h-full object-contain" /> : <div className="text-slate-100 font-black text-3xl italic">IMG 2</div>}
                                   </div>
                               </div>
@@ -800,7 +820,7 @@ const App: React.FC = () => {
                                     <span className="text-lg font-black text-slate-800 block leading-tight">- {reportData.person1Name || 'নাম'}</span>
                                     <span className="text-[11px] font-bold text-slate-500 block leading-[1.3]">{reportData.person1Title || 'পদবি'}</span>
                                  </div>
-                                 <div className="absolute bottom-0 right-0 h-full w-[65%] flex items-end justify-end z-20">
+                                 <div className="absolute bottom-0 right-0 h-full w-[65%] flex items-end justify-end z-20 overflow-hidden">
                                     {reportData.image1 && <img crossOrigin="anonymous" src={reportData.image1} className="max-h-full max-w-full object-contain object-bottom" />}
                                  </div>
                               </div>
@@ -834,15 +854,15 @@ const App: React.FC = () => {
                                  )}
                               </div>
 
-                              <div className="flex-1 w-full px-6 pb-8 mt-auto z-10">
-                                 <div className="bg-slate-50 border border-slate-100 rounded-sm overflow-hidden flex items-center justify-center h-full max-h-48">
+                              <div className="flex-1 w-full px-6 pb-8 mt-auto z-10 overflow-hidden">
+                                 <div className="bg-slate-50 border border-slate-100 rounded-sm overflow-hidden flex items-center justify-center h-48 w-full relative">
                                     {reportData.image1 ? <img crossOrigin="anonymous" src={reportData.image1} className="w-full h-full object-contain" /> : <div className="text-slate-100 text-4xl font-black italic opacity-20">FactDot IMAGE</div>}
                                  </div>
                               </div>
                            </div>
                         ) : selectedType === 'type3' ? (
                            <div className="flex-1 flex h-full relative z-10">
-                              <div className="flex-1 flex flex-col relative" style={{ backgroundColor: selectedSubCat.color }}>
+                              <div className="flex-1 flex flex-col relative overflow-hidden" style={{ backgroundColor: selectedSubCat.color }}>
                                  <div className="p-5 pt-12 text-white flex-1 space-y-5 z-20">
                                     <h2 className="text-[20px] font-bold leading-[1.4] drop-shadow-sm">"{reportData.person1Quote || 'উক্তি'}"</h2>
                                     <div className="border-t border-white/20 pt-3">
@@ -851,12 +871,12 @@ const App: React.FC = () => {
                                     </div>
                                  </div>
                                  {!isQuoteCompare2 && (
-                                   <div className="h-[40%] w-full flex items-end relative z-10">
+                                   <div className="h-40 w-full flex items-end relative z-10 overflow-hidden">
                                       {reportData.image1 && <img crossOrigin="anonymous" src={reportData.image1} className="w-full h-full object-contain object-bottom" />}
                                    </div>
                                  )}
                               </div>
-                              <div className="flex-1 flex flex-col relative bg-white border-l border-slate-100">
+                              <div className="flex-1 flex flex-col relative bg-white border-l border-slate-100 overflow-hidden">
                                  <div className="p-5 pt-12 text-slate-800 flex-1 space-y-5 z-20">
                                     <h2 className="text-[20px] font-bold leading-[1.4]">"{reportData.person2Quote || 'উক্তি'}"</h2>
                                     <div className="border-t border-slate-100 pt-3">
@@ -865,7 +885,7 @@ const App: React.FC = () => {
                                     </div>
                                  </div>
                                  {!isQuoteCompare2 && (
-                                   <div className="h-[40%] w-full flex items-end relative z-10">
+                                   <div className="h-40 w-full flex items-end relative z-10 overflow-hidden">
                                       {reportData.image2 && <img crossOrigin="anonymous" src={reportData.image2} className="w-full h-full object-contain object-bottom" />}
                                    </div>
                                  )}
