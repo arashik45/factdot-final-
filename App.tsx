@@ -548,9 +548,15 @@ const App: React.FC = () => {
                                {isQuoteCompare2 ? 'আগে যা বলেছিলেন' : 'ব্যক্তি ১ (বাম)'}
                             </span>
                             {!isQuoteCompare2 && (
-                              <div className="relative">
-                                <input type="text" placeholder="নাম" className={inputClasses} value={reportData.person1Name} onChange={(e) => setReportData({...reportData, person1Name: e.target.value})} />
-                                <ClearButton field="person1Name" />
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="relative">
+                                  <input type="text" placeholder="নাম" className={inputClasses} value={reportData.person1Name} onChange={(e) => setReportData({...reportData, person1Name: e.target.value})} />
+                                  <ClearButton field="person1Name" />
+                                </div>
+                                <div className="relative">
+                                  <input type="text" placeholder="পদবি/বিবরণ" className={inputClasses} value={reportData.person1Title} onChange={(e) => setReportData({...reportData, person1Title: e.target.value})} />
+                                  <ClearButton field="person1Title" />
+                                </div>
                               </div>
                             )}
                             <div className="relative">
@@ -562,20 +568,20 @@ const App: React.FC = () => {
                             <span className="text-[10px] font-black text-indigo-800 uppercase tracking-widest">
                                {isQuoteCompare2 ? 'এখন যা বলছেন' : 'ব্যক্তি ২ (ডান)'}
                             </span>
-                            <div className="relative">
-                              <input type="text" placeholder="নাম" className={inputClasses} value={reportData.person2Name} onChange={(e) => setReportData({...reportData, person2Name: e.target.value})} />
-                              <ClearButton field="person2Name" />
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="relative">
+                                <input type="text" placeholder="নাম" className={inputClasses} value={reportData.person2Name} onChange={(e) => setReportData({...reportData, person2Name: e.target.value})} />
+                                <ClearButton field="person2Name" />
+                              </div>
+                              <div className="relative">
+                                <input type="text" placeholder="পদবি/বিবরণ" className={inputClasses} value={reportData.person2Title} onChange={(e) => setReportData({...reportData, person2Title: e.target.value})} />
+                                <ClearButton field="person2Title" />
+                              </div>
                             </div>
                             <div className="relative">
                               <textarea placeholder="উক্তি..." rows={3} className={textareaClasses} value={reportData.person2Quote} onChange={(e) => setReportData({...reportData, person2Quote: e.target.value})} />
                               <TextareaClearButton field="person2Quote" />
                             </div>
-                            {isQuoteCompare2 && (
-                               <div className="relative">
-                                 <input type="text" placeholder="পদবি/বিবরণ" className={inputClasses} value={reportData.person2Title} onChange={(e) => setReportData({...reportData, person2Title: e.target.value})} />
-                                 <ClearButton field="person2Title" />
-                               </div>
-                            )}
                          </div>
                        </div>
                     )}
@@ -837,7 +843,7 @@ const App: React.FC = () => {
                                     <h2 className="text-[20px] font-bold leading-[1.4] drop-shadow-sm">"{reportData.person1Quote || 'উক্তি'}"</h2>
                                     <div className="border-t border-white/20 pt-3">
                                        <span className="text-sm font-black block leading-[1.4]">- {isQuoteCompare2 ? (reportData.person2Name || 'নাম') : (reportData.person1Name || 'নাম')}</span>
-                                       {!isQuoteCompare2 && <span className="text-[10px] opacity-70 font-bold uppercase block leading-[1.4]">{reportData.person1Title || 'পদবি'}</span>}
+                                       <span className="text-[10px] opacity-70 font-bold uppercase block leading-[1.4]">{isQuoteCompare2 ? reportData.person2Title : reportData.person1Title || 'পদবি'}</span>
                                     </div>
                                  </div>
                                  {!isQuoteCompare2 && (
